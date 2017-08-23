@@ -1,45 +1,36 @@
-extern "C" {
-  #ifdef HAVE_CONFIG_H
+#ifdef HAVE_CONFIG_H
     #include "config.h"
-  #endif
+#endif
 
-  #include "php.h"
-  #include "php_murmurhash3.h"
-}
+#if defined(_MSC_VER) && (_MSC_VER < 1600)
+
+    typedef unsigned char uint8_t;
+    typedef unsigned int uint32_t;
+    typedef unsigned __int64 uint64_t;
+
+    // Other compilers
+
+#else	// defined(_MSC_VER)
+    #include <inttypes.h>
+    #include <stdint.h>
+#endif // !defined(_MSC_VER)
+
+
+#include "php.h"
+#include "php_ini.h"
+#include "ext/standard/info.h"
+#include "php_murmurhash3.h"
 
 #include "MurmurHash3.h"
 
 #define MURMURHASH3_OUTPUT_LENGTH	16
 
-
-static zend_function_entry murmurhash3_functions[] = {
-    PHP_FE(murmurhash3, NULL)
-    {NULL, NULL, NULL}
-};
-
-zend_module_entry murmurhash3_module_entry = {
-#if ZEND_MODULE_API_NO >= 20010901
-    STANDARD_MODULE_HEADER,
-#endif
-    PHP_MURMURHASH3_EXTNAME,
-    murmurhash3_functions,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-#if ZEND_MODULE_API_NO >= 20010901
-    PHP_MURMURHASH3_VERSION,
-#endif
-    STANDARD_MODULE_PROPERTIES
-};
-
-extern "C" {
-  #ifdef COMPILE_DL_MURMURHASH3
+#ifdef COMPILE_DL_MURMURHASH3
     ZEND_GET_MODULE(murmurhash3)
-  #endif
-}
-
+    #ifdef ZTS
+        ZEND_TSRMLS_CACHE_DEFINE();
+    #endif    
+#endif
 
 // Convert uint8 to hex representation (2 characters)
 void c2h(uint8_t c, char *r)
@@ -49,17 +40,29 @@ void c2h(uint8_t c, char *r)
   r[1] = hex[c % 16];
 }
 
+PHP_MINFO_FUNCTION(murmurhash3)
+{
+	php_info_print_table_start();
+	php_info_print_table_header(2, "murmurhash3 support", "enabled");
+	php_info_print_table_row(2, "extension version", PHP_MURMURHASH3_VERSION);
+	php_info_print_table_end();
+}
+
 PHP_FUNCTION(murmurhash3)
 {
-    char *key;
-    int key_len;
-    long seed;
+    char *key = NULL;
+    size_t key_len;
+    unsigned long long seed = 0;
     char output[MURMURHASH3_OUTPUT_LENGTH + 1];
     char result[MURMURHASH3_OUTPUT_LENGTH * 2 + 1];
 
     // Parse the input parameters
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &key, &key_len, &seed) == FAILURE) {
-        RETURN_NULL();
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|l", &key, &key_len, &seed) == FAILURE || key_len < 1) {
+        return;
+    }
+    
+    if (!seed) {
+        seed = 0;
     }
 
     // Calculate the hash
@@ -73,5 +76,24 @@ PHP_FUNCTION(murmurhash3)
     result[MURMURHASH3_OUTPUT_LENGTH * 2] = 0;
 
     // Return the result
-    RETURN_STRING(result, 1);
+    RETURN_STRING(result);
 }
+
+
+const zend_function_entry murmurhash3_functions[] = {
+	PHP_FE(murmurhash3, NULL)
+	PHP_FE_END
+};
+
+zend_module_entry murmurhash3_module_entry = {
+	STANDARD_MODULE_HEADER,
+	PHP_MURMURHASH3_EXTNAME,
+	murmurhash3_functions,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	PHP_MINFO(murmurhash3),
+	PHP_MURMURHASH3_VERSION,
+	STANDARD_MODULE_PROPERTIES
+};
