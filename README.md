@@ -1,4 +1,4 @@
-# PHP MurmurHash3
+# PHP7 MurmurHash3
 
 *MurmurHash* is an algorithm desiged by Austin Appleby.
 
