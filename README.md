@@ -32,4 +32,11 @@ sudo phpenmod murmurhash3
 // Example
 echo murmurhash3('anystring');      // default seed usage
 echo murmurhash3('anystring', 123); // specific seed usage
+
+// Some locale strings
+echo murmurhash3('№АаЯя');
+
+// Example from @maksimf
+echo murmurhash3('豥붢㦖徱阵儹㜀耄巅簏罚撦');
+echo murmurhash3('豥붢㦖徱阵儹㜀耄巅簏罚撦', 1096928849);
 ``` 
