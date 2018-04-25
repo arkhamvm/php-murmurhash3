@@ -16,7 +16,7 @@ sudo make install
 ```
 
 
-Create `murmurhash3.ini` in lib dir (for php 7.1: `/etc/php/7.1/mods-available/`):
+Create `murmurhash3.ini` in lib dir (for example php 7.1: `/etc/php/7.1/mods-available/`):
 ```
 extension=murmurhash3.so
 ```
